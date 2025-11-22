@@ -2,7 +2,7 @@
 
 *What was broken*
 
-Right-click actions (eat, shield, bow, etc.) wouldn’t fire when the mod was on.
+Right-click actions (eat, shield, bow, etc.) wouldn’t work when the mod was on.
 
 Keyboard “use/place” still worked, so I didn’t notice at first. - I use keyboard place so it wasn't an issue for me, I wanted to make sure it works nicely with keyboard placing, learned from this and will test with right click from now on.
 
