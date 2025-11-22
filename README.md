@@ -42,3 +42,6 @@ UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 WorldRenderEvents.AFTER_ENTITIES.register(ctx -> {
     dispatcher.render(ghost, x, y, z, 0f, td, matrices, consumers, light);
 });
+
+
+Source code isn't updated with these small changes, I just decided to add this here incase people are curious, these are the only changes everything else is the same.
