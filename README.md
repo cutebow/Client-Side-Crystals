@@ -1,4 +1,5 @@
-**UPDATE**
+**UPDATE** 
+(read since the old code does not aline with this update these are the changes)
 
 *What was broken*
 
@@ -42,6 +43,42 @@ UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 WorldRenderEvents.AFTER_ENTITIES.register(ctx -> {
     dispatcher.render(ghost, x, y, z, 0f, td, matrices, consumers, light);
 });
+
+
+# Code Explained
+
+config/ConfigManager
+
+This just loads and saves the mod’s config JSON.
+It stores the “instant” toggle (and whatever other simple settings are in the data object), then writes it back to disk when it changes.
+
+core/ClientHooks
+
+This is the client entrypoint.
+It loads the config, turns the predictor on or off based on the config setting, then registers the client-side event hooks.
+It hooks into using blocks (placing crystals), entity load/unload (seeing real crystals appear or disappear), and client tick (updating the prediction state every tick).
+
+core/CrystalPredictor
+
+This is the core logic.
+When you try to place a crystal, it can spawn a temporary local crystal instantly on your client so you don’t feel that “wait for server” delay.
+Then it watches for the real server crystal to show up (or for the action to fail), and removes the temporary one so everything stays consistent with server reality.
+
+It also runs a tick loop that keeps the temporary crystals positioned correctly and deletes any that have expired.
+It checks your attack key as well, so it can react to “I’m trying to break a crystal” situations and clean up predictions that should no longer exist.
+
+gui/ModSettingsScreen
+
+This is a simple in-game settings screen.
+It basically just gives you a button to toggle the instant prediction setting and a done button to close the screen.
+
+util/ModMenuIntegration
+
+This is the Mod Menu hook.
+It makes it so clicking the mod in Mod Menu opens the mod’s settings screen.
+
+
+
 
 
 Source code isn't updated with these small changes, I just decided to add this here incase people are curious, these are the only changes everything else is the same.
