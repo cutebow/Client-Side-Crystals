@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.clientsidecrystals.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "EntityAgeAccessor",
+    "EndCrystalEntityRendererSeamlessMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

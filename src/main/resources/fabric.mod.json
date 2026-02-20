@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "clientsidecrystals",
+  "version": "${version}",
+  "name": "Client Side Crystals",
+  "description": "Instant client-side crystals (Visual) actual crystals remain vanilla - works with marlows opti, and server side opti's",
+  "authors": ["cutebow"],
+  "license": "MIT",
+  "icon": "assets/clientsidecrystals/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["me.clientsidecrystals.core.ClientHooks"],
+    "modmenu": ["me.clientsidecrystals.util.ModMenuIntegration"]
+  },
+  "mixins": [
+    "clientsidecrystals.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=${minecraft_version}",
+    "fabric-api": "*",
+    "java": ">=21"
+  },
+  "suggests": {
+    "modmenu": ">=11.0.0"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.modrinth": "https://modrinth.com/user/cutebow",
+        "modmenu.discord": "https://discord.gg/A2Nx9kxDeB"
+      }
+    }
+  }
+}
