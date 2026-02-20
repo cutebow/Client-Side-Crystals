@@ -1,84 +1,49 @@
-**UPDATE** 
-(read since the old code does not aline with this update these are the changes)
+Client Side Crystals shows a crystal preview on your screen when placing crystals. It is client side only and visual only. It does not place real crystals, it does not change damage, and it does not change anything on the server. Real crystals are still handled by vanilla and by the server.
 
-*What was broken*
+**When a crystal is placed, a temporary client crystal is shown right away so placement feels instant. When the real crystal appears from the server, the preview is removed. If the place fails, the preview times out and disappears. actions pass through the fake crystal and the mod just listens for those inputs and removes the fake crystal so you target the real one and never hit the fake, which you cannot even hit anyways since it just passes through it.**
 
-Right-click actions (eat, shield, bow, etc.) wouldn’t work when the mod was on.
+# Code explained by class
+**config/ConfigManager**
 
-Keyboard “use/place” still worked, so I didn’t notice at first. - I use keyboard place so it wasn't an issue for me, I wanted to make sure it works nicely with keyboard placing, learned from this and will test with right click from now on.
+Loads and saves the config file clientsidecrystals.json.
+Stores three settings: instantEnabled, seamlessEnabled, predictionTimeoutTicks.
 
-*Why it happened*
-
-I was returning SUCCESS on block use, which consumed the click and blocked vanilla right-click actions.
-
-I also spawned a client-only crystal into the world, which gave it a hitbox. The mouse ray hit the fake crystal instead of the item/block, so right-click use never reached vanilla.
-
-*What I changed*
-
-I no longer consume the click; I return PASS so vanilla keeps running.
-
-I don’t add a fake entity to the world anymore. I render a ghost crystal only during world render, so there’s no hitbox to steal focus.
-
-Prediction triggers on the rising edge of “use” and only when the base is valid.
-
-*Before vs After**
-
-Old (problematic)
-
-UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-    spawnPredicted(crystalPos);
-    return ActionResult.SUCCESS;
-});
-
-world.addEntity(predictedCrystal);
-
-
-New (fixed)
-
-UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-    spawnGhost(crystalPos);
-    return ActionResult.PASS;
-});
-
-WorldRenderEvents.AFTER_ENTITIES.register(ctx -> {
-    dispatcher.render(ghost, x, y, z, 0f, td, matrices, consumers, light);
-});
-
-
-# Code Explained
-
-config/ConfigManager
-
-This just loads and saves the mod’s config JSON.
-It stores the “instant” toggle (and whatever other simple settings are in the data object), then writes it back to disk when it changes.
-
-core/ClientHooks
+**core/ClientHooks**
 
 This is the client entrypoint.
-It loads the config, turns the predictor on or off based on the config setting, then registers the client-side event hooks.
-It hooks into using blocks (placing crystals), entity load/unload (seeing real crystals appear or disappear), and client tick (updating the prediction state every tick).
+Loads the config, turns the predictor on or off, and registers all client events.
+Block use is registered with PASS so vanilla right click actions keep working.
+Also opens the settings screen.
 
-core/CrystalPredictor
+**core/CrystalPredictor**
 
-This is the core logic.
-When you try to place a crystal, it can spawn a temporary local crystal instantly on your client so you don’t feel that “wait for server” delay.
-Then it watches for the real server crystal to show up (or for the action to fail), and removes the temporary one so everything stays consistent with server reality.
+Main logic for the visual preview.
+When the crystal item is used on a valid base, it spawns a temporary client crystal at the placement spot and tracks it.
+On tick it keeps the preview positioned, and removes it when the real crystal shows up or when the timeout is reached.
+If seamless is enabled, it links the preview to the real crystal for a smooth handoff.
 
-It also runs a tick loop that keeps the temporary crystals positioned correctly and deletes any that have expired.
-It checks your attack key as well, so it can react to “I’m trying to break a crystal” situations and clean up predictions that should no longer exist.
+**core/SeamlessCrystalBridge**
 
-gui/ModSettingsScreen
+Small helper used only for the seamless option.
+Tracks a short hide window and an age offset for real crystals so the switch from preview to real looks smoother.
 
-This is a simple in-game settings screen.
-It basically just gives you a button to toggle the instant prediction setting and a done button to close the screen.
+**gui/ModSettingsScreen**
 
-util/ModMenuIntegration
+Simple settings screen with two toggles.
+Instant turns the preview on or off.
+Seamless turns the smooth handoff on or off.
 
-This is the Mod Menu hook.
-It makes it so clicking the mod in Mod Menu opens the mod’s settings screen.
+**util/ModMenuIntegration**
 
+Mod Menu hook.
+Makes Mod Menu open ModSettingsScreen.
 
+**mixin/EntityAgeAccessor**
 
+Accessor for the entity age field.
+Used to shift the crystal animation age when seamless is enabled.
 
+**mixin/EndCrystalEntityRendererSeamlessMixin**
 
-Source code isn't updated with these small changes, I just decided to add this here incase people are curious, these are the only changes everything else is the same.
+Render mixin for crystals.
+Applies the age shift during render state update and hides the real crystal for a very short time when needed, so the handoff does not look like a sudden reset this is for the seemless look so it doesnt look weird.
