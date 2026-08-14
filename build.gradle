@@ -1,0 +1,171 @@
+plugins {
+    id 'base'
+    id 'fabric-loom' version '1.17-SNAPSHOT' apply false
+}
+
+ext.targets = [
+        mc121  : [minecraft: '1.21',    yarn: '1.21+build.9',    loader: '0.16.10', fabricApi: '0.102.0+1.21',    modMenu: '11.0.1',            yacl: '3.5.0+1.21-fabric'],
+        mc1211 : [minecraft: '1.21.1',  yarn: '1.21.1+build.3',  fabricApi: '0.102.0+1.21.1',  modMenu: '11.0.3',            yacl: '3.5.0+1.21-fabric'],
+        mc1212 : [minecraft: '1.21.2',  yarn: '1.21.2+build.1',  fabricApi: '0.106.1+1.21.2',  modMenu: '12.0.0',            yacl: '3.6.1+1.21.2-fabric'],
+        mc1213 : [minecraft: '1.21.3',  yarn: '1.21.3+build.2',  fabricApi: '0.114.1+1.21.3',  modMenu: '12.0.0',            yacl: '3.6.1+1.21.2-fabric'],
+        mc1214 : [minecraft: '1.21.4',  yarn: '1.21.4+build.8',  fabricApi: '0.119.4+1.21.4',  modMenu: '13.0.3',            yacl: '3.6.2+1.21.4-fabric'],
+        mc1215 : [minecraft: '1.21.5',  yarn: '1.21.5+build.1',  fabricApi: '0.128.2+1.21.5',  modMenu: '14.0.0',            yacl: '3.6.6+1.21.5-fabric'],
+        mc1216 : [minecraft: '1.21.6',  yarn: '1.21.6+build.1',  fabricApi: '0.128.2+1.21.6',  modMenu: '15.0.0',            yacl: '3.7.1+1.21.6-fabric'],
+        mc1217 : [minecraft: '1.21.7',  yarn: '1.21.7+build.8',  fabricApi: '0.129.0+1.21.7',  modMenu: '15.0.0',            yacl: '3.7.1+1.21.6-fabric'],
+        mc1218 : [minecraft: '1.21.8',  yarn: '1.21.8+build.1',  fabricApi: '0.136.1+1.21.8',  modMenu: '15.0.0',            yacl: '3.7.1+1.21.6-fabric'],
+        mc1219 : [minecraft: '1.21.9',  yarn: '1.21.9+build.1',  fabricApi: '0.134.1+1.21.9',  modMenu: '16.0.0',            yacl: '3.8.1+1.21.10-fabric'],
+        mc12110: [minecraft: '1.21.10', yarn: '1.21.10+build.3', fabricApi: '0.138.4+1.21.10', modMenu: '16.0.0',            yacl: '3.8.1+1.21.10-fabric'],
+        mc12111: [minecraft: '1.21.11', yarn: '1.21.11+build.1', fabricApi: '0.139.4+1.21.11', modMenu: '17.0.0-alpha.1',    yacl: '3.8.1+1.21.11-fabric']
+]
+
+ext.modernTargets = [
+        mc261 : [minecraft: '26.1',   loader: '0.19.3', fabricApi: '0.145.1+26.1',   modMenu: '18.0.0', yacl: '3.9.6+26.1-fabric'],
+        mc2611: [minecraft: '26.1.1', loader: '0.19.3', fabricApi: '0.145.4+26.1.1', modMenu: '18.0.0', yacl: '3.9.6+26.1-fabric'],
+        mc2612: [minecraft: '26.1.2', loader: '0.19.3', fabricApi: '0.152.1+26.1.2', modMenu: '18.0.0', yacl: '3.9.6+26.1-fabric'],
+        mc262 : [minecraft: '26.2',   loader: '0.19.3', fabricApi: '0.149.1+26.2',   modMenu: '20.0.1', yacl: '3.9.6+26.2-fabric']
+]
+
+allprojects {
+    group = providers.gradleProperty('maven_group').get()
+    repositories {
+        mavenCentral()
+        maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
+        maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/releases/' }
+        maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' }
+        maven { name = 'Quilt'; url = 'https://maven.quiltmc.org/repository/release/' }
+    }
+}
+
+configure(subprojects.findAll { targets.containsKey(it.name) }) { project ->
+    apply plugin: 'fabric-loom'
+
+    def target = rootProject.ext.targets[project.name]
+    project.ext.mcVersion = target.minecraft
+    version = target.minecraft
+
+    base {
+        archivesName = providers.gradleProperty('archives_base_name').get()
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${target.minecraft}"
+        mappings "net.fabricmc:yarn:${target.yarn}:v2"
+        modImplementation "net.fabricmc:fabric-loader:${target.loader ?: providers.gradleProperty('loader_version').get()}"
+        modImplementation "net.fabricmc.fabric-api:fabric-api:${target.fabricApi}"
+        modCompileOnly "com.terraformersmc:modmenu:${target.modMenu}"
+        modRuntimeOnly "com.terraformersmc:modmenu:${target.modMenu}"
+        modImplementation "maven.modrinth:yacl:${target.yacl}"
+
+        implementation 'org.quiltmc.parsers:json:0.3.0'
+        implementation 'org.quiltmc.parsers:gson:0.3.0'
+        include 'org.quiltmc.parsers:json:0.3.0'
+        include 'org.quiltmc.parsers:gson:0.3.0'
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+        withSourcesJar()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 21
+    }
+
+    tasks.processResources {
+        inputs.property 'version', project.version
+        inputs.property 'minecraft_version', target.minecraft
+        filesMatching('fabric.mod.json') {
+            expand(
+                    version: project.version,
+                    minecraft_version: target.minecraft
+            )
+        }
+    }
+
+    tasks.jar {
+        archiveBaseName.set(providers.gradleProperty('archives_base_name').get())
+        archiveVersion.set(target.minecraft)
+    }
+
+    tasks.sourcesJar {
+        archiveBaseName.set(providers.gradleProperty('archives_base_name').get())
+        archiveVersion.set(target.minecraft)
+    }
+
+    tasks.remapJar {
+        archiveBaseName.set(providers.gradleProperty('archives_base_name').get())
+        archiveVersion.set(target.minecraft)
+    }
+
+    tasks.remapSourcesJar {
+        dependsOn tasks.sourcesJar
+    }
+}
+
+configure(subprojects.findAll { modernTargets.containsKey(it.name) }) { project ->
+    apply plugin: 'net.fabricmc.fabric-loom'
+
+    def target = rootProject.ext.modernTargets[project.name]
+    project.ext.mcVersion = target.minecraft
+    version = target.minecraft
+
+    base {
+        archivesName = providers.gradleProperty('archives_base_name').get()
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${target.minecraft}"
+        implementation "net.fabricmc:fabric-loader:${target.loader}"
+        implementation "net.fabricmc.fabric-api:fabric-api:${target.fabricApi}"
+        compileOnly "com.terraformersmc:modmenu:${target.modMenu}"
+        runtimeOnly "com.terraformersmc:modmenu:${target.modMenu}"
+        implementation "maven.modrinth:yacl:${target.yacl}"
+
+        implementation 'org.quiltmc.parsers:json:0.3.0'
+        implementation 'org.quiltmc.parsers:gson:0.3.0'
+        include 'org.quiltmc.parsers:json:0.3.0'
+        include 'org.quiltmc.parsers:gson:0.3.0'
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+        withSourcesJar()
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 25
+    }
+
+    tasks.processResources {
+        inputs.property 'version', project.version
+        inputs.property 'minecraft_version', target.minecraft
+        filesMatching('fabric.mod.json') {
+            expand(
+                    version: project.version,
+                    minecraft_version: target.minecraft
+            )
+        }
+    }
+
+    tasks.jar {
+        archiveBaseName.set(providers.gradleProperty('archives_base_name').get())
+        archiveVersion.set(target.minecraft)
+    }
+
+    tasks.sourcesJar {
+        archiveBaseName.set(providers.gradleProperty('archives_base_name').get())
+        archiveVersion.set(target.minecraft)
+    }
+}
+
+tasks.named('build') {
+    dependsOn ':bundle:bundleJar'
+}
