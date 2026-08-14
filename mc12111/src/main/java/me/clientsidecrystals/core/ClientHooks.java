@@ -21,7 +21,7 @@ public final class ClientHooks implements ClientModInitializer {
             if (world instanceof ClientWorld && player.getStackInHand(hand).isOf(Items.END_CRYSTAL)) {
                 CrystalPredictor.onUseBlock(hand, hit);
             }
-            return ActionResult.PASS; // geeg, i talked abt this in the read me or wtv 
+            return ActionResult.PASS; // i talked abt this in the read me or wtv 
         });
 
         ClientEntityEvents.ENTITY_LOAD.register((entity, world) -> CrystalPredictor.onEntityLoaded(entity));
