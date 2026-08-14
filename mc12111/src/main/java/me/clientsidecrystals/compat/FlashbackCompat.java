@@ -18,7 +18,7 @@ public final class FlashbackCompat {
     private static Method recorderReady;
     private static Method writePacket;
     private static Object playPhase;
-    // optional dep base mod still works without flashback
+    // optional dep base mod still works without flashback, not sure if it still works this was kinda a beta,  im not getting a ping spoofer to test but ik the tint doesnt show which I don't plan on fixing cause its too much work geeg
     private static final boolean AVAILABLE = loadFlashback();
 
     private FlashbackCompat() {
